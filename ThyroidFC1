@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thyroid Pathology Flashcards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .flashcard-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 300px; /* Fixed height for consistency */
+            perspective: 1000px;
+            cursor: pointer;
+            border-radius: 1.5rem; /* Inherit border-radius */
+            overflow: hidden; /* Ensure content stays within rounded corners */
+        }
+        .flashcard-inner {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 1.5rem;
+            display: flex; /* Use flexbox for centering content */
+            align-items: center;
+            justify-content: center;
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+            display: flex; /* Use flexbox for centering content */
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            word-wrap: break-word; /* Ensure long words break */
+            overflow-y: auto; /* Enable scrolling for long content */
+        }
+        .flashcard-front {
+            background-color: #dbeafe; /* Light blue */
+            color: #1e3a8a; /* Dark blue text */
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .flashcard-back {
+            background-color: #bfdbfe; /* Slightly darker blue */
+            color: #1e40af; /* Even darker blue text */
+            transform: rotateY(180deg);
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+        .flashcard-front::-webkit-scrollbar, .flashcard-back::-webkit-scrollbar {
+            width: 8px;
+        }
+        .flashcard-front::-webkit-scrollbar-thumb, .flashcard-back::-webkit-scrollbar-thumb {
+            background-color: #93c5fd;
+            border-radius: 4px;
+        }
+        .flashcard-front::-webkit-scrollbar-track, .flashcard-back::-webkit-scrollbar-track {
+            background-color: #e0f2fe;
+        }
+
+        .controls {
+            padding: 1.5rem;
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 0.75rem; /* Gap between buttons */
+            justify-content: center; /* Center buttons */
+            align-items: center;
+            background-color: #e0f2fe; /* Lighter background for controls */
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+        }
+        .btn {
+            background-color: #3b82f6; /* Blue button */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Rounded button corners */
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+            flex-grow: 1; /* Allow buttons to grow */
+            min-width: 120px; /* Minimum width for buttons */
+        }
+        .btn:hover {
+            background-color: #2563eb; /* Darker blue on hover */
+        }
+        .card-counter {
+            text-align: center;
+            padding: 0.75rem;
+            font-size: 1rem;
+            color: #4b5563;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .flashcard-container {
+                margin: 0.5rem;
+                padding: 0;
+            }
+            .flashcard {
+                height: 250px; /* Slightly shorter on mobile */
+            }
+            .flashcard-front, .flashcard-back {
+                font-size: 1.1rem;
+                padding: 1rem;
+            }
+            .controls {
+                flex-direction: column; /* Stack buttons vertically on small screens */
+                padding: 1rem;
+            }
+            .btn {
+                width: 100%; /* Full width buttons */
+                margin-bottom: 0.5rem; /* Space between stacked buttons */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flashcard-container">
+        <div class="flashcard" id="flashcard">
+            <div class="flashcard-inner">
+                <div class="flashcard-front" id="flashcard-front"></div>
+                <div class="flashcard-back" id="flashcard-back"></div>
+            </div>
+        </div>
+        <div class="card-counter" id="card-counter"></div>
+        <div class="controls">
+            <button class="btn" id="prev-btn">Previous</button>
+            <button class="btn" id="next-btn">Next</button>
+            <button class="btn" id="shuffle-btn">Shuffle</button>
+        </div>
+    </div>
+
+    <script>
+        const flashcards = [
+            {
+                question: "What is the location and average weight of the thyroid gland in adults?",
+                answer: "Anterior neck at C5-T1, overlays 2nd - 4th tracheal rings. Average weight: 15-20 g (slightly more in women)."
+            },
+            {
+                question: "What is the 'foramen cecum' in thyroid embryology?",
+                answer: "Proliferation of endodermal cells on midline pharyngeal floor, where the thyroid gland originates."
+            },
+            {
+                question: "What is a common surgical treatment for a Thyroglossal duct cyst?",
+                answer: "'Sistrunk' procedure (includes resection part of hyoid bone)."
+            },
+            {
+                question: "What is 'Lingual Thyroid' and its clinical significance?",
+                answer: "Failure of thyroid gland descent, most common at the base of the tongue. Significance: May be the *only* thyroid tissue in the body (~70% of time), so its removal can result in hypothyroidism."
+            },
+            {
+                question: "What cells secrete calcitonin and what is their embryological origin?",
+                answer: "Parafollicular cells (C cells), which originate from the Neural crest."
+            },
+            {
+                question: "List three key systemic effects of thyroid hormone ($T_3$, $T_4$).",
+                answer: "Fetal brain and skeletal maturation, increased basal metabolic rate, inotropic and chronotropic effects on heart, increased sensitivity to catecholamines, stimulates gut motility, increased bone turnover, increased serum glucose, decreased serum cholesterol."
+            },
+            {
+                question: "Define 'Goiter'.",
+                answer: "Any enlargement of the thyroid creating a neck mass. Can be cysts, hyperplasia, benign adenoma, or carcinoma."
+            },
+            {
+                question: "What is 'Thyrotoxicosis' and what are its three most common causes?",
+                answer: "A hypermetabolic state caused by elevated circulating levels of free T3 and T4. Most common causes: Diffuse hyperplasia (Graves disease, 85% of cases), Hyperfunctional multinodular goiter, Hyperfunctional adenoma."
+            },
+            {
+                question: "List three common symptoms AND three common signs of Hyperthyroidism.",
+                answer: "Symptoms: Weakness, fatigue, heat intolerance, nervousness, increased sweating, tremors, palpitations, weight loss. Signs: Goiter/thyroid bruit, hyperkinesis, ophthalmopathy, lid retraction/stare, lid lag, warm moist skin, hyperreflexia, tachycardia/arrhythmia."
+            },
+            {
+                question: "What is 'Thyroid Storm'?",
+                answer: "A life-threatening hypermetabolic state due to abrupt onset of severe hyperthyroidism, with a high mortality rate (10-75%). It often occurs in patients with underlying Graves disease due to an acute elevation in catecholamine levels."
+            },
+            {
+                question: "How does Myxedema Coma typically present clinically?",
+                answer: "Bradycardia, hypotension, hypothermia, hypoventilation, stupor, coma, delayed deep tendon reflexes, dry/puffy skin."
+            },
+            {
+                question: "What is the typical TSH and Free T4 profile for Primary Hyperthyroidism?",
+                answer: "TSH is decreased (↓), Free T4 is increased (↑)."
+            },
+            {
+                question: "What is the typical TSH and Free T4 profile for Primary Hypothyroidism?",
+                answer: "TSH is increased (↑), Free T4 is decreased (↓)."
+            },
+            {
+                question: "What is Hashimoto Thyroiditis and what is its most common clinical outcome?",
+                answer: "An autoimmune disease in which the immune system reacts against various thyroid antigens, leading to progressive depletion of thyroid epithelial cells. It is the most common cause of hypothyroidism."
+            },
+            {
+                question: "Describe three characteristic histological features of Hashimoto Thyroiditis.",
+                answer: "Massive lymphoplasmacytic infiltration with lymphoid follicles formation, destruction of thyroid follicles, remaining follicles are small and many are lined by Hurthle cells, increased interstitial connective tissue, presence of oncocytes."
+            },
+            {
+                question: "What is De Quervain thyroiditis and what are its common clinical features?",
+                answer: "A subacute, granulomatous thyroiditis, much less common than Hashimoto. It typically affects individuals 30-50 years old and often follows an upper respiratory infection. Clinical features include abrupt onset of throat pain radiating to the ear, painful/enlarged thyroid, and flu-like symptoms. It is usually self-limiting."
+            },
+            {
+                question: "What is Riedel thyroiditis (fibrosing thyroiditis)?",
+                answer: "A rare condition characterized by a rock-hard, 'woody' neck mass due to extensive fibrosis. It may cause hypothyroidism if enough gland is involved, and can require surgery to relieve pressure on the trachea."
+            },
+            {
+                question: "List three clinical criteria that suggest a solitary thyroid nodule is *more likely* to be neoplastic (malignant).",
+                answer: "Solitary nodules (vs. multiple), occurring in younger patients, occurring in males, or a history of radiation treatment to the head and neck region. Nodules that are 'cold' on isotopic scan are also more suspicious."
+            },
+            {
+                question: "What is the most common benign tumor of thyroid follicular cells?",
+                answer: "Follicular adenoma."
+            },
+            {
+                question: "What is the hallmark histological feature used to distinguish a follicular adenoma from a follicular carcinoma?",
+                answer: "The presence of an intact, well-formed capsule encircling the tumor in follicular adenomas. Follicular carcinomas are characterized by capsular and/or vascular invasion."
+            },
+            {
+                question: "What is the most common type of thyroid malignancy, and what is its prevalence?",
+                answer: "Papillary Carcinoma, accounting for 75-85% of all thyroid malignancies."
+            },
+            {
+                question: "List four characteristic microscopic features of Papillary Carcinoma.",
+                answer: "1) Papillae: branching papillae with fibrovascular stalk covered by cuboidal epithelial cells. 2) Nuclear features: ground-glass nuclei (Orphan Annie eye nuclei), intranuclear inclusions ('pseudo-inclusions'), or intranuclear grooves. 3) Psammoma bodies (concentric calcifications)."
+            },
+            {
+                question: "How does Papillary Carcinoma typically metastasize?",
+                answer: "Primarily via lymphatic invasion to adjacent cervical lymph nodes (estimated in up to half the cases). Involvement of blood vessels is relatively uncommon."
+            },
+            {
+                question: "What is the second most common thyroid cancer, and what is its preferred mode of spread?",
+                answer: "Follicular Carcinoma (10-20% of all thyroid cancers). Its preferred mode of spread is hematogenous (via blood vessels), commonly metastasizing to the lung and bone."
+            },
+            {
+                question: "From what cells do Medullary Thyroid Carcinomas (MTC) arise, and what is a key associated genetic mutation?",
+                answer: "MTCs arise from the parafollicular C cells in the thyroid. They are strongly associated with RET protooncogene mutations, especially in familial forms (Multiple Endocrine Neoplasia type 2 - MEN-2)."
+            },
+            {
+                question: "What distinctive substance, derived from calcitonin, is often seen in the stroma of Medullary Thyroid Carcinomas on histology?",
+                answer: "Acellular amyloid deposits."
+            },
+            {
+                question: "Describe the key characteristics and prognosis of Anaplastic Carcinoma of the thyroid.",
+                answer: "These are undifferentiated tumors of the thyroid follicular epithelium. They are highly aggressive with a mortality rate approaching 100%. They represent less than 5% of all thyroid cancers, and typically affect patients around 65 years old. The prognosis is very poor (worst prognosis among thyroid carcinomas)."
+            },
+            {
+                question: "Compare the prognosis of the four main types of thyroid carcinomas: Papillary, Follicular, Medullary, and Anaplastic.",
+                answer: "Papillary Carcinoma: Excellent prognosis. Follicular Carcinoma: Good prognosis. Medullary Carcinoma: Guarded prognosis. Anaplastic Carcinoma: Poor (Worst) prognosis."
+            },
+            {
+                question: "What is a Pyramidal lobe of the thyroid and its significance?",
+                answer: "It's a remnant of the thyroglossal tract, present in up to 50% of people. It can be attached to the hyoid bone or incorporated into a thyroglossal duct cyst."
+            },
+            {
+                question: "How is the diagnosis of lingual thyroid confirmed?",
+                answer: "By its ability to trap radioactive iodine (e.g., I123) in imaging studies."
+            },
+            {
+                question: "What is the main function of calcitonin, secreted by C cells?",
+                answer: "Calcitonin is involved in calcium regulation, typically lowering blood calcium levels."
+            },
+            {
+                question: "What are 'inotropic' and 'chronotropic' effects of thyroid hormone on the heart?",
+                answer: "Inotropic refers to the force of heart muscle contraction, and chronotropic refers to the heart rate. Thyroid hormones increase both."
+            },
+            {
+                question: "Besides function, what are two other clinical presentations of thyroid diseases?",
+                answer: "Abnormalities of the gland itself (e.g., swelling/Goiter, pain/discomfort) and other scenarios like pregnancy or infertility."
+            },
+            {
+                question: "What is 'Lid Lag' in Thyrotoxicosis?",
+                answer: "Delayed descent of the upper eyelid when the eye moves downwards, a characteristic sign of hyperthyroidism."
+            },
+            {
+                question: "What is 'Apathetic hyperthyroidism'?",
+                answer: "Thyrotoxicosis occurring in the elderly, where typical features of thyroid hormone excess are blunted due to old age and comorbidities. Diagnosis is often made via lab work for unexplained weight loss or worsening cardiovascular disease."
+            },
+            {
+                question: "What is 'Myxedema' in adults and its clinical features?",
+                answer: "Hypothyroidism developing in the older child or adult, characterized by slowing of physical and mental activity, generalized fatigue, apathy, mental sluggishness, cold intolerance, weight gain, decreased sweating, and cool, pale skin due to decreased blood flow. It also involves accumulation of matrix substances (glycosaminoglycans, hyaluronic acid) in skin and visceral sites, leading to edema, coarsening of facial features, tongue enlargement, and deepening voice."
+            },
+            {
+                question: "What is 'Cretinism' and its primary cause in endemic areas?",
+                answer: "Hypothyroidism that develops in infancy or early childhood. In endemic areas, it's primarily caused by dietary iodine deficiency."
+            },
+            {
+                question: "What are key clinical features of cretinism?",
+                answer: "Impaired development of the skeletal and central nervous systems, leading to severe mental retardation, short stature, coarse facial features, protruding tongue, and umbilical hernia."
+            },
+            {
+                question: "What is 'Endemic Goiter' and what causes it?",
+                answer: "Goiter occurring in geographic areas where soil, water, and food have low iodine levels. The lack of iodine leads to decreased thyroid hormone synthesis and a compensatory increase in TSH, causing glandular enlargement."
+            },
+            {
+                question: "What are 'Goitrogens'?",
+                answer: "Substances that interfere with thyroid hormone synthesis, such as excessive calcium, or certain vegetables like cabbage and cauliflower, or substances like thiocyanate in cassava."
+            },
+            {
+                question: "What is 'Sporadic Goiter' and when does its peak incidence occur?",
+                answer: "Goiter occurring less frequently than endemic goiter, with a female preponderance. Peak incidence is at puberty or young adult life. Causes can include ingestion of interfering substances or hereditary enzymatic defects."
+            },
+            {
+                question: "What is 'Plummer syndrome'?",
+                answer: "Hyperthyroidism caused by a hyperfunctioning nodule within a long-standing multinodular goiter (toxic multinodular goiter). It is *not* accompanied by the infiltrative ophthalmopathy and dermopathy seen in Graves disease."
+            },
+            {
+                question: "What is the main difference in clinical appearance between a Multinodular Goiter and Graves Disease?",
+                answer: "Multinodular goiter is typically asymmetrical and nodular, while Graves disease presents with diffuse, symmetrical enlargement and is often associated with ophthalmopathy and dermopathy."
+            },
+            {
+                question: "What is the primary pathophysiology of Graves Disease?",
+                answer: "It's an autoimmune disorder where Thyroid Stimulating Immunoglobulins (TSI) activate the TSH receptor in thyroid cells, leading to excessive thyroid hormone production and hyperplasia of the gland."
+            },
+            {
+                question: "List the three main clinical findings that form the triad of Graves Disease.",
+                answer: "1) Hyperthyroidism due to hyperfunctional, diffuse enlargement of the thyroid, 2) Infiltrative ophthalmopathy with resultant exophthalmos, and 3) Localized, infiltrative dermopathy (pretibial myxedema)."
+            },
+            {
+                question: "What are 'Thyroid growth-stimulating immunoglobulins (TGI)'?",
+                answer: "Autoantibodies, also directed against the TSH receptor, implicated in the proliferation (growth) of thyroid follicular epithelium in Graves disease."
+            },
+            {
+                question: "What is 'Pretibial myxedema' and its characteristic appearance?",
+                answer: "Localized infiltrative dermopathy seen in Graves disease, typically over the pretibial area. It presents as raised, thick, leathery, sometimes nodular skin with sharply demarcated margins and prominent hair follicles, usually non-tender."
+            },
+            {
+                question: "What is 'Thyroid Acropachy' and its features?",
+                answer: "A rare manifestation of Graves disease characterized by clubbing of the fingers, painless periosteal bone formation, periosteal proliferation, and soft tissue swelling that is pigmented and hyperkeratotic."
+            },
+            {
+                question: "Describe the gross appearance of the thyroid gland in Graves Disease.",
+                answer: "Symmetrically enlarged, homogenous, soft, and appears meaty on cut-surface, reflecting hyperplasia and hypertrophy of follicular cells."
+            },
+            {
+                question: "What is 'Toxic Thyroid Neoplasm' (toxic adenoma)?",
+                answer: "A benign monoclonal expansion of thyroid follicular cells that escapes TSH regulation and autonomously produces thyroid hormones, almost never malignant."
+            },
+            {
+                question: "What differentiates the Thyroid Scintigraphy findings in Toxic Multinodular Goiter vs. Toxic Adenoma?",
+                answer: "Toxic Multinodular Goiter shows diffuse patchy uptake, while Toxic Adenoma reveals a solitary hot nodule."
+            },
+            {
+                question: "What is 'Infectious Thyroiditis'?",
+                answer: "Inflammation of the thyroid caused by acute or chronic infections (bacterial, fungal, mycobacterial). It presents with sudden neck pain, tenderness, fever, chills, but usually does not significantly affect thyroid function."
+            },
+            {
+                question: "What genetic antigen is commonly associated with De Quervain thyroiditis?",
+                answer: "Many patients with De Quervain thyroiditis have the HLA-B35 antigen, suggesting a viral trigger (e.g., coxsackie, mumps, measles) in genetically predisposed individuals."
+            },
+            {
+                question: "What are 'Hurthle cells' and where are they commonly seen?",
+                answer: "They are follicular cells with abundant granular, eosinophilic cytoplasm, representing oncocytic metaplasia. They are commonly seen lining remaining follicles in Hashimoto Thyroiditis."
+            },
+            {
+                question: "What are some autoimmune diseases associated with Hashimoto Thyroiditis?",
+                answer: "Sjögren syndrome, SLE, Myasthenia gravis, Pernicious anemia, Type 1 diabetes, Autoimmune adrenalitis."
+            },
+            {
+                question: "What is the significance of a 'cold nodule' on a radioiodine thyroid scan?",
+                answer: "Cold nodules (areas that take up little I123) are usually benign, but about 10% can be malignant, making them more suspicious than 'hot' nodules."
+            },
+            {
+                question: "What is 'Fine-Needle Aspiration Biopsy (FNAB)' used for in thyroid evaluation?",
+                answer: "It is a primary diagnostic tool to evaluate thyroid nodules, helping to determine if they are benign or malignant by examining cellular samples."
+            },
+            {
+                question: "What is the 'RET protooncogene' and its role in thyroid cancer?",
+                answer: "It codes for a tyrosine kinase receptor. Mutations in this gene can lead to unregulated growth signals and are implicated in papillary and medullary thyroid carcinomas."
+            },
+            {
+                question: "What is 'Psammoma bodies' in Papillary Carcinoma?",
+                answer: "Concentric calcifications seen within the papillae, a characteristic histological feature of Papillary Carcinoma."
+            },
+            {
+                question: "What is the primary difference in metastatic spread between Papillary and Follicular Carcinomas?",
+                answer: "Papillary Carcinoma primarily spreads via lymphatics (to lymph nodes), while Follicular Carcinoma prefers hematogenous spread (to lung and bone)."
+            },
+            {
+                question: "What mutations are frequently found in Follicular Carcinomas?",
+                answer: "Approximately half of follicular thyroid carcinomas harbor mutations in the RAS family of oncogenes (HRAS, NRAS, and KRAS), with NRAS mutations being the most common."
+            },
+            {
+                question: "What is the significance of 'vascular invasion' in differentiating follicular adenoma from carcinoma?",
+                answer: "Vascular invasion (tumor cells invading blood vessels within or beyond the capsule) is a definitive sign of malignancy in follicular neoplasms, distinguishing follicular carcinoma from benign adenoma."
+            },
+            {
+                question: "What are 'intranuclear inclusions' or 'intranuclear grooves' in papillary carcinoma?",
+                answer: "These are eosinophilic areas within the nucleus representing invaginations of cytoplasm, or nuclear membrane irregularities, characteristic features of papillary carcinoma nuclei."
+            },
+            {
+                question: "What specific staining is used to confirm Medullary Thyroid Carcinoma?",
+                answer: "Immunohistochemical staining with anti-calcitonin antibody, showing strong positivity in the tumor cells."
+            },
+            {
+                question: "At what age does Anaplastic Carcinoma typically present, and what is its historical association?",
+                answer: "Mean age of presentation is 65 years. Half of patients have a history of multinodular goiter, and 20-30% have a concurrent differentiated thyroid tumor (often papillary carcinoma)."
+            },
+            {
+                question: "List two common gross features of Anaplastic Carcinoma.",
+                answer: "Huge white or tan mass, oftentimes invading adjacent structures. Necrosis and hemorrhages are commonly seen."
+            },
+            {
+                question: "What are the common histological patterns of Anaplastic Thyroid Carcinoma?",
+                answer: "Large, pleomorphic giant cells (including osteoclast-like multinucleate giant cells); spindle cells with a sarcomatous appearance; mixed spindle and giant cells; and small cells resembling those seen in small cell carcinomas arising at other sites."
+            }
+        ];
+
+        let currentCardIndex = 0;
+        let isFlipped = false;
+
+        const flashcardElem = document.getElementById('flashcard');
+        const flashcardFront = document.getElementById('flashcard-front');
+        const flashcardBack = document.getElementById('flashcard-back');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const cardCounter = document.getElementById('card-counter');
+
+        function updateCardDisplay() {
+            const card = flashcards[currentCardIndex];
+            flashcardFront.textContent = card.question;
+            flashcardBack.textContent = card.answer;
+            cardCounter.textContent = `${currentCardIndex + 1} / ${flashcards.length}`;
+            if (isFlipped) {
+                flashcardElem.classList.add('flipped');
+            } else {
+                flashcardElem.classList.remove('flipped');
+            }
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            updateCardDisplay();
+        }
+
+        function showNextCard() {
+            isFlipped = false; // Reset flip state for new card
+            currentCardIndex = (currentCardIndex + 1) % flashcards.length;
+            updateCardDisplay();
+        }
+
+        function showPrevCard() {
+            isFlipped = false; // Reset flip state for new card
+            currentCardIndex = (currentCardIndex - 1 + flashcards.length) % flashcards.length;
+            updateCardDisplay();
+        }
+
+        function shuffleCards() {
+            isFlipped = false; // Reset flip state
+            for (let i = flashcards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]]; // ES6 swap
+            }
+            currentCardIndex = 0; // Start from the beginning of the shuffled deck
+            updateCardDisplay();
+        }
+
+        // Event Listeners
+        flashcardElem.addEventListener('click', flipCard);
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card from flipping when button is clicked
+            showNextCard();
+        });
+        prevBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card from flipping when button is clicked
+            showPrevCard();
+        });
+        shuffleBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card from flipping when button is clicked
+            shuffleCards();
+        });
+
+        // Initialize the first card
+        window.onload = updateCardDisplay;
+
+    </script>
+</body>
+</html>
